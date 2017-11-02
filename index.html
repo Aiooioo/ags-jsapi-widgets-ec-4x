@@ -1,17 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>ArcGIS Custom Widget - Float popup</title>
   <link rel="stylesheet" href="//localhost/jsapi/4.5/esri/css/main.css">
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
 </head>
+
 <body>
   <div id="viewDiv"></div>
   <script type="text/javascript" src="//localhost/jsapi/4.5/init.js"></script>
   <script>
+    require([
+      "esri/Map",
+      "esri/layers/FeatureLayer",
+      "esri/views/MapView",
+      "dojo/domReady!"
+    ], function (
+      Map,
+      FeatureLayer,
+      MapView
+    ) {
+        // Create the Map
+        var map = new Map({
+          basemap: "gray"
+        });
 
+        // Create the MapView
+        var view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-117.08, 34.10],
+          zoom: 12
+        });
+
+        var featureLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/TrailRuns/FeatureServer/0",
+          outFields: ["*"],
+        });
+        map.add(featureLayer);
+      });
   </script>
 </body>
+
 </html>

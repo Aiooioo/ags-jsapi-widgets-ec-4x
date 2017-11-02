@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/arcgis-js-api": "^4.5.1",
-    "@types/dojo": "^1.9.40"
+    "@types/arcgis-js-api": "^4.5.1"
+  },
+  "devDependencies": {
+    "dojo-typings": "^1.11.9"
   }
 }

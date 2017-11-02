@@ -38,11 +38,25 @@ class FloatPopViewModel extends declared(Accessor) {
   visible: boolean = false;
 
   @property()
+  featureCount: number = null;
+
+  @property()
+  features: Graphic[] = null;
+
+  @property()
   promises: IPromise<Graphic[]>[] = null;
+
+  @property()
+  title: string = null;
+
+
 
   clear() {
     this.set({
-      promises: []
+      promises: [],
+      features: [],
+      title: null,
+      location: null,
     })
   }
 
