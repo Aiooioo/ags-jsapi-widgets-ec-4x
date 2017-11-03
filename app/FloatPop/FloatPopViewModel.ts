@@ -12,10 +12,13 @@ import SceneView = require("esri/views/SceneView");
 import Graphic = require("esri/Graphic");
 import Geometry = require("esri/geometry/Geometry");
 
+import Evented = require("esri/core/Evented");
+import AnchorElementViewModel = require("esri/widgets/support/AnchorElementViewModel");
+
 type State = "ready" | "disabled";
 
 @subclass("esri.widgets.custom.FloatPop.FloatPopViewModel")
-class FloatPopViewModel extends declared(Accessor) {
+class FloatPopViewModel extends declared(Accessor, Evented, AnchorElementViewModel) {
 
   destroy() {
     this.view = null;
