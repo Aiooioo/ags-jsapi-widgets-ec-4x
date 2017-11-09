@@ -86,9 +86,9 @@
  * });
  */
 
-/// <amd-dependency path="../core/tsSupport/declareExtendsHelper" name="__extends" />
-/// <amd-dependency path="../core/tsSupport/decorateHelper" name="__decorate" />
-/// <amd-dependency path="../core/tsSupport/assignHelper" name="__assign" />
+/// <amd-dependency path="esri/core/tsSupport/declareExtendsHelper" name="__extends" />
+/// <amd-dependency path="esri/core/tsSupport/decorateHelper" name="__decorate" />
+/// <amd-dependency path="esri/core/tsSupport/assignHelper" name="__assign" />
 
 import {
   accessibleHandler,
@@ -115,26 +115,10 @@ import widgetUtils = require("esri/widgets/support/widgetUtils");
 
 import Action = require("esri/support/Action");
 
-import { PausableHandle } from "esri/core/interfaces";
+import PopupRenderer = require("esri/widgets/Popup/PopupRenderer");
+import PopupViewModel = require("esri/widgets/Popup/PopupViewModel");
 
-import { Breakpoints } from "esri/views/interfaces";
-
-import {
-  ActionEvent,
-  Alignment,
-  DockOptions,
-  DockOptionsBreakpoint,
-  DockPosition,
-  PopupOpenOptions,
-  PopupOutsideViewOptions,
-  PopupPosition,
-  PopupPositionStyle,
-  ViewPadding
-} from "Popup/interfaces";
-
-import PopupRenderer = require("./Popup/PopupRenderer");
-import PopupViewModel = require("./Popup/PopupViewModel");
-import * as i18n from "dojo/i18n!./FloatPop/nls/FloatPop";
+import i18n = require("dojo/i18n!esri/widgets/Popup/nls/Popup");
 
 import Graphic = require("esri/Graphic");
 
@@ -151,7 +135,7 @@ import domGeometry = require("dojo/dom-geometry");
 
 import _WidgetBase = require("dijit/_WidgetBase");
 
-const DEFAULT_ACTION_IMAGE = require.toUrl("./Popup/images/default-action.svg");
+const DEFAULT_ACTION_IMAGE = require.toUrl("esri/widgets/Popup/images/default-action.svg");
 
 const CSS = {
   // common
@@ -167,16 +151,18 @@ const CSS = {
   iconCheckMark: "esri-icon-check-mark",
   iconLoading: "esri-rotating esri-icon-loading-indicator",
   iconZoom: "esri-icon-zoom-in-magnifying-glass",
+  iconEcPin: "esri-icon-map-pin",
   // base
   base: "esri-popup",
   // containers
   widget: "esri-widget",
   container: "esri-popup__position-container",
-  main: "esri-popup__main-container",
+  main: "esri-popup__main-container ec-widgets-floatpop__main-container",
   loadingContainer: "esri-popup__loading-container",
   // global modifiers
   shadow: "esri-popup--shadow",
   isDocked: "esri-popup--is-docked",
+  isDockedFloatPop: "ec-widgets-floatpop--is-docked",
   isDockedTopLeft: "esri-popup--is-docked-top-left",
   isDockedTopCenter: "esri-popup--is-docked-top-center",
   isDockedTopRight: "esri-popup--is-docked-top-right",
@@ -192,14 +178,14 @@ const CSS = {
   isFeatureMenuOpen: "esri-popup--feature-menu-open",
   hasFeatureUpdated: "esri-popup--feature-updated",
   // header and content
-  header: "esri-popup__header",
-  headerButtons: "esri-popup__header-buttons",
+  header: "esri-popup__header ec-widgets-floatpop__header",
+  headerButtons: "esri-popup__header-buttons ec-widgets-floatpop__header-buttons",
   headerTitle: "esri-popup__header-title",
   headerTitleButton: "esri-popup__header-title--button",
-  content: "esri-popup__content",
+  content: "esri-popup__content ec-widgets-floatpop__content",
   featureButtons: "esri-popup__feature-buttons",
   // buttons
-  button: "esri-popup__button",
+  button: "esri-popup__button ec-widgets-floatpop__button",
   buttonDock: "esri-popup__button--dock",
   // icons
   icon: "esri-popup__icon",
@@ -211,7 +197,10 @@ const CSS = {
   actionText: "esri-popup__action-text",
   // pointer
   pointer: "esri-popup__pointer",
-  pointerDirection: "esri-popup__pointer-direction",
+  pointerDirection: "esri-popup__pointer-direction ec-widgets-floatpop__pointer-direction",
+  // ec widgets float pop pin
+  ecpinWrapper: "ec-widgets-floatpop__pin-wrap",
+  ecpin: "ec-widgets-floatpop__pin",
   // navigation
   navigation: "esri-popup__navigation",
   navigationButtons: "esri-popup__navigation-buttons",
@@ -237,7 +226,7 @@ const CSS = {
 
 const ZOOM_TO_ACTION_ID = "zoom-to";
 
-const DOCK_OPTIONS: DockOptions = {
+const DOCK_OPTIONS: __esri.PopupDockOptions = {
   buttonEnabled: true,
   position: "auto",
   breakpoint: {
@@ -426,7 +415,7 @@ class FloatPop extends declared(Widget) {
 
   private _spinner: Spinner = null;
 
-  private _closeFeatureMenuHandle: PausableHandle = null;
+  private _closeFeatureMenuHandle: any = null;
 
   //--------------------------------------------------------------------------
   //
@@ -519,7 +508,7 @@ class FloatPop extends declared(Widget) {
    * view.popup.alignment = "auto";
    */
   @property()
-  alignment: Alignment = "auto";
+  alignment: any = "auto";
 
   //----------------------------------
   //  autoCloseEnabled
@@ -613,7 +602,7 @@ class FloatPop extends declared(Widget) {
     ]
   })
   @renderable()
-  get currentAlignment(): Alignment {
+  get currentAlignment(): any {
     return this._getCurrentAlignment();
   }
 
@@ -639,7 +628,7 @@ class FloatPop extends declared(Widget) {
     ]
   })
   @renderable()
-  get currentDockPosition(): DockPosition {
+  get currentDockPosition(): any {
     return this._getCurrentDockPosition();
   }
 
@@ -702,12 +691,12 @@ class FloatPop extends declared(Widget) {
   @property()
   @renderable()
   get dockOptions() {
-    return this._get<DockOptions>("dockOptions") || DOCK_OPTIONS;
+    return this._get<__esri.PopupDockOptions>("dockOptions") || DOCK_OPTIONS;
   }
-  set dockOptions(dockOptions: DockOptions) {
+  set dockOptions(dockOptions: __esri.PopupDockOptions) {
     const dockOptionDefaults = { ...DOCK_OPTIONS };
-    const breakpoints = this.get<Breakpoints>("viewModel.view.breakpoints");
-    const viewDockSize: DockOptionsBreakpoint = {};
+    const breakpoints = this.get<Object>("viewModel.view.breakpoints");
+    const viewDockSize: __esri.PopupDockOptionsBreakpoint = {};
 
     if (breakpoints) {
       viewDockSize.width = breakpoints.xsmall;
@@ -1170,6 +1159,12 @@ class FloatPop extends declared(Widget) {
    *    title: "You clicked here",  // title displayed in the popup
    *    content: "This is a point of interest"  // content displayed in the popup
    *   });
+   * });   * view.on("click", function(event){
+   *   view.popup.open({
+   *    location: event.mapPoint,  // location of the click on the view
+   *    title: "You clicked here",  // title displayed in the popup
+   *    content: "This is a point of interest"  // content displayed in the popup
+   *   });
    * });
    *
    * @example
@@ -1187,8 +1182,8 @@ class FloatPop extends declared(Widget) {
    * });
    *
    */
-  open(options?: PopupOpenOptions) {
-    const defaultOptions: PopupOpenOptions = {
+  open(options?: __esri.PopupOpenOptions) {
+    const defaultOptions: __esri.PopupOpenOptions = {
       featureMenuOpen: false,
       updateLocationEnabled: false,
       promises: []
@@ -1512,9 +1507,12 @@ class FloatPop extends declared(Widget) {
       (currentDockPosition === "bottom-center") ||
       (currentDockPosition === "bottom-right"));
 
-    const actionsNode = !isFeatureMenuOpen ? (
-      <div key={buildKey("actions")} class={CSS.actions}>{this._renderActions()}</div>
-    ) : null;
+    // const actionsNode = !isFeatureMenuOpen ? (
+    //   <div key={buildKey("actions")} class={CSS.actions}>{this._renderActions()}</div>
+    // ) : null;
+
+    // 不再渲染底部的actions菜单
+    const actionsNode = null;
 
     const navigationNode = (
       <section key={buildKey("navigation")} class={CSS.navigation}>
@@ -1563,6 +1561,16 @@ class FloatPop extends declared(Widget) {
       </div>
     ) : null;
 
+    const pinNode = dockEnabled ? (
+      <div key={buildKey("ecpin")} class={CSS.ecpin}
+        role="presentation"
+        bind={this}
+        onclick={this._triggerEcPin}>
+        <span aria-hidden="true"
+          class={join(CSS.icon, CSS.iconEcPin)}></span>
+      </div>
+    ) : null;
+
     const containerClasses = {
       [CSS.alignTopCenter]: currentAlignment === "top-center",
       [CSS.alignBottomCenter]: currentAlignment === "bottom-center",
@@ -1571,6 +1579,7 @@ class FloatPop extends declared(Widget) {
       [CSS.alignTopRight]: currentAlignment === "top-right",
       [CSS.alignBottomRight]: currentAlignment === "bottom-right",
       [CSS.isDocked]: dockEnabled,
+      [CSS.isDockedFloatPop]: dockEnabled,
       [CSS.shadow]: !dockEnabled,
       [CSS.hasFeatureUpdated]: visible,
       [CSS.isDockedTopLeft]: currentDockPosition === "top-left",
@@ -1607,17 +1616,20 @@ class FloatPop extends declared(Widget) {
         bind={this}
         afterCreate={this._positionContainer}
         afterUpdate={this._positionContainer}>
-        <div class={join(CSS.main, CSS.widget)}
-          classes={mainContainerClasses}
-          bind={this}
-          afterCreate={this._storeMainContainerNode}
-          afterUpdate={this._storeMainContainerNode}>
-          {buttonsTopNode}
-          {menuTopNode}
-          {headerNode}
-          {contentNode}
-          {buttonsBottomNode}
-          {menuBottomNode}
+        <div class={CSS.ecpinWrapper}>
+          {pinNode}
+          <div class={join(CSS.main, CSS.widget)}
+            classes={mainContainerClasses}
+            bind={this}
+            afterCreate={this._storeMainContainerNode}
+            afterUpdate={this._storeMainContainerNode}>
+            {buttonsTopNode}
+            {menuTopNode}
+            {headerNode}
+            {contentNode}
+            {buttonsBottomNode}
+            {menuBottomNode}
+          </div>
         </div>
         {pointerNode}
       </div>
@@ -1643,7 +1655,7 @@ class FloatPop extends declared(Widget) {
     this.scheduleRender();
   }
 
-  private _zoomToAction(event: ActionEvent): void {
+  private _zoomToAction(event: any): void {
     if (!event.action || event.action.id !== ZOOM_TO_ACTION_ID) {
       return;
     }
@@ -1816,7 +1828,7 @@ class FloatPop extends declared(Widget) {
       screenLocation.y <= view.height);
   }
 
-  private _isOutsideView(options: PopupOutsideViewOptions): boolean {
+  private _isOutsideView(options: any): boolean {
     const { popupHeight, popupWidth, screenLocation, side, view } = options;
 
     if (isNaN(popupWidth) || isNaN(popupHeight) || !view || !screenLocation) {
@@ -1844,7 +1856,7 @@ class FloatPop extends declared(Widget) {
     return false;
   }
 
-  private _determineCurrentAlignment(): Alignment {
+  private _determineCurrentAlignment(): any {
     const {
       _pointerOffsetInPx: pointerOffset,
       _containerNode: containerNode,
@@ -1929,7 +1941,7 @@ class FloatPop extends declared(Widget) {
           "top-center";
   }
 
-  private _getCurrentAlignment(): Alignment {
+  private _getCurrentAlignment(): any {
     const { alignment, dockEnabled } = this;
 
     if (dockEnabled) {
@@ -1952,8 +1964,8 @@ class FloatPop extends declared(Widget) {
     this._set("currentDockPosition", this._getCurrentDockPosition());
   }
 
-  private _getDockPosition(): DockPosition {
-    const dockPosition = this.get<DockPosition>("dockOptions.position");
+  private _getDockPosition(): any {
+    const dockPosition = this.get<any>("dockOptions.position");
     const position = dockPosition === "auto" ?
       this._determineCurrentDockPosition() :
       typeof dockPosition === "function" ?
@@ -1962,11 +1974,11 @@ class FloatPop extends declared(Widget) {
     return position;
   }
 
-  private _getCurrentDockPosition(): DockPosition {
+  private _getCurrentDockPosition(): any {
     return this.dockEnabled ? this._getDockPosition() : null;
   }
 
-  private _wouldDockTo(): DockPosition {
+  private _wouldDockTo(): any {
     return !this.dockEnabled ? this._getDockPosition() : null;
   }
 
@@ -2029,7 +2041,7 @@ class FloatPop extends declared(Widget) {
 
     const viewPadding = view.padding || { left: 0, right: 0, top: 0, bottom: 0 };
     const viewWidth = view.width - viewPadding.left - viewPadding.right;
-    const breakpoints = view.get<Breakpoints>("breakpoints");
+    const breakpoints = view.get<Object>("breakpoints");
 
     if (breakpoints && viewWidth <= breakpoints.xsmall) {
       return "bottom-center";
@@ -2110,7 +2122,7 @@ class FloatPop extends declared(Widget) {
     return width;
   }
 
-  private _calculateAlignmentPosition(x: number, y: number, view: MapView | SceneView, width: number): PopupPosition {
+  private _calculateAlignmentPosition(x: number, y: number, view: MapView | SceneView, width: number): any {
     const { currentAlignment, _pointerOffsetInPx: pointerOffset } = this;
     const halfWidth = width / 2;
     const viewHeightOffset = view.height - y;
@@ -2159,7 +2171,7 @@ class FloatPop extends declared(Widget) {
     }
   }
 
-  private _calculatePositionStyle(screenLocation: ScreenPoint, domGeometryBox: dojo.DomGeometryBox): PopupPositionStyle {
+  private _calculatePositionStyle(screenLocation: ScreenPoint, domGeometryBox: dojo.DomGeometryBox): any {
     const { dockEnabled, view } = this;
 
     if (!view) {
@@ -2248,7 +2260,7 @@ class FloatPop extends declared(Widget) {
     this._setDockEnabledForViewSize(this.dockOptions);
   }
 
-  private _dockingThresholdCrossed(newSize: number[], oldSize: number[], dockingThreshold: DockOptionsBreakpoint): boolean {
+  private _dockingThresholdCrossed(newSize: number[], oldSize: number[], dockingThreshold: __esri.PopupDockOptionsBreakpoint): boolean {
     const [currWidth, currHeight] = newSize,
       [prevWidth, prevHeight] = oldSize,
       { width: dockingWidth, height: dockingHeight } = dockingThreshold;
@@ -2264,7 +2276,7 @@ class FloatPop extends declared(Widget) {
       return;
     }
 
-    const viewPadding = this.get<ViewPadding>("viewModel.view.padding") || { left: 0, right: 0, top: 0, bottom: 0 };
+    const viewPadding = this.get<__esri.ViewPadding>("viewModel.view.padding") || { left: 0, right: 0, top: 0, bottom: 0 };
     const widthPadding = viewPadding.left + viewPadding.right;
     const heightPadding = viewPadding.top + viewPadding.bottom;
     const newUISize: number[] = [],
@@ -2324,7 +2336,7 @@ class FloatPop extends declared(Widget) {
     viewModel.screenLocationEnabled = screenLocationEnabled;
   }
 
-  private _shouldDockAtCurrentViewSize(dockOptions: DockOptions): boolean {
+  private _shouldDockAtCurrentViewSize(dockOptions: __esri.PopupDockOptions): boolean {
     const breakpoint = dockOptions.breakpoint;
     const { width: uiWidth, height: uiHeight } = this.get<UI>("viewModel.view.ui");
 
@@ -2338,7 +2350,7 @@ class FloatPop extends declared(Widget) {
     return crossedWidthBreakpoint || crossedHeightBreakpoint;
   }
 
-  private _setDockEnabledForViewSize(dockOptions: DockOptions): void {
+  private _setDockEnabledForViewSize(dockOptions: __esri.PopupDockOptions): void {
     if (dockOptions.breakpoint) {
       this.dockEnabled = this._shouldDockAtCurrentViewSize(dockOptions);
     }
@@ -2393,6 +2405,14 @@ class FloatPop extends declared(Widget) {
   @accessibleHandler()
   private _toggleFeatureMenu(): void {
     this.featureMenuOpen = !this.featureMenuOpen;
+  }
+
+  @accessibleHandler()
+  private _triggerEcPin(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.viewModel.triggerAction(0);
   }
 
   @accessibleHandler()

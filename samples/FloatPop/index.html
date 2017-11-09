@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>ArcGIS Custom Widget - Float popup</title>
+  <link rel="shortcut icon" href="./favicon.ico">
+  <link rel="stylesheet" href="//localhost/jsapi/4.5/esri/css/main.css">
+  <link rel="stylesheet" href="//localhost/ec-widgets/css/FloatPop/FloatPop.css">
+  <style>
+    html,
+    body,
+    #root {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #root {
+      display: flex;
+      flex-direction: row;
+    }
+
+    #viewDiv {
+      height: 100vh;
+      flex: auto;
+    }
+
+    #siderDiv {
+      width: 200px;
+      height: 100vh;
+      background: #d5d5d5;
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    #siderDiv h2 {
+      flex: none;
+      width: 100%;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root">
+    <div id="viewDiv"></div>
+    <div id="siderDiv">
+      <h2>多实例Popup</h2>
+    </div>
+  </div>
+  <script>
+    var dojoConfig = {
+      packages: [{
+        name: 'ec-widgets',
+        location: document.location.pathname + 'app',
+      }]
+    };
+  </script>
+  <script type="text/javascript" src="//localhost/jsapi/4.5/init.js"></script>
+  <script>
+    require([
+      "dojo/dom-construct",
+      "esri/Map",
+      "esri/layers/FeatureLayer",
+      "esri/views/SceneView",
+      "ec-widgets/FloatPopManager",
+      "dojo/domReady!"
+    ], function (
+      domConstruct,
+      Map,
+      FeatureLayer,
+      SceneView,
+      FloatPopManager
+    ) {
+        // Create the Map
+        var map = new Map({
+          basemap: "gray"
+        });
+
+        // Create the MapView
+        var view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          camera: {
+            position: [-81.76, 16.77, 1932626],
+            tilt: 40
+          }
+        });
+
+        var featureLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/CITIES_EastUSA_range/FeatureServer/0",
+          outFields: ["*"],
+          labelsVisible: false,
+          popupEnabled: false,
+          popupTemplate: {
+            title: '',
+            content: "{CITY_NAME}"
+          },
+          renderer: {
+            type: "simple", // autocasts as new SimpleRenderer()
+            symbol: {
+              type: "point-3d", // autocasts as new PointSymbol3D()
+              symbolLayers: [{
+                type: "icon", // autocasts as new IconSymbol3DLayer()
+                size: 12,
+                resource: {
+                  primitive: "square"
+                },
+                material: {
+                  color: "orange"
+                },
+                outline: {
+                  color: "white",
+                  size: 1
+                }
+              }]
+            }
+          }
+        });
+        map.add(featureLayer);
+
+        // view.on("click", function (event) {
+        //   var floatPop = new Popup({
+        //     container: document.createElement("div")
+        //   });
+        //   floatPop.viewModel.view = view;
+        //   var popupContainer = view.get('popup');
+        //   domConstruct.place(floatPop.container, popupContainer.domNode);
+        //   floatPop.open({
+        //     location: event.mapPoint,  // location of the click on the view
+        //     title: '',  // title displayed in the popup
+        //     content: "This is a point of interest"  // content displayed in the popup
+        //   });
+        // });
+
+        var manager = new FloatPopManager({
+          enabled: true,
+          view: view,
+          autoclose: true
+        });
+      });
+  </script>
+</body>
+
+</html>
